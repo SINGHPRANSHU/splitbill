@@ -19,7 +19,7 @@ func NewUserController(r *chi.Mux, h *handler.Handler) *UserController {
 
 func (userController *UserController) RegisterRoutes() {
 	userController.r.Route("/user", func(r chi.Router) {
-		r.Get("/{user_id}", userController.handler.GetUser)
+		r.Get("/{user_name}/", userController.handler.GetUser)
 		r.Post("/", userController.handler.CreateUser)
 	})
 }
