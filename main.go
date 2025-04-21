@@ -20,6 +20,7 @@ func main() {
 	r.Use(middleware.Logger)
 
 	controller.NewUserController(r, handler).RegisterRoutes()
+	controller.NewGroupController(r, handler).RegisterRoutes()
 
 	http.ListenAndServe(":" + config.Port, r)
 }

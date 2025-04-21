@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 
@@ -9,10 +10,12 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/singhpranshu/splitbill/common"
 	"github.com/singhpranshu/splitbill/common/dto"
+	db "github.com/singhpranshu/splitbill/repository"
 	"github.com/singhpranshu/splitbill/repository/model"
 )
 
 var validate = validator.New()
+
 func (h *Handler) GetUser(w http.ResponseWriter, r *http.Request) {
 	// Handler logic to get user
 	username := chi.URLParam(r, "user_name")
@@ -23,7 +26,7 @@ func (h *Handler) GetUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	user, err := h.DB.GetUser(r.Context(), username)
-	if err != nil{
+	if err != nil {
 		log.Println("Error getting user:", err)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -56,6 +59,11 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		log.Println("Error creating user:", err)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
+		var duplicateEntryError *db.SqlDuplicateEntryError
+		if errors.As(err, &duplicateEntryError) {
+			w.Write([]byte(common.GetHttpErrorResponse(http.StatusConflict, err.Error())))
+			return
+		}
 		w.Write([]byte(common.GetHttpErrorResponse(http.StatusInternalServerError, "something went wrong")))
 		return
 	}
