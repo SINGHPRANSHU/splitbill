@@ -21,6 +21,7 @@ func main() {
 
 	controller.NewUserController(r, handler).RegisterRoutes()
 	controller.NewGroupController(r, handler).RegisterRoutes()
+	controller.NewSplitController(r, handler).RegisterRoutes()
 
-	http.ListenAndServe(":" + config.Port, r)
+	http.ListenAndServe(":"+config.Port, r)
 }

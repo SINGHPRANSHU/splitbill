@@ -34,3 +34,13 @@ func (db *DB) CreateGroup(ctx context.Context, group *model.Group) (*model.Group
 	}
 	return group, nil
 }
+
+func (db *DB) GetUsersByGroupIdAndUserId(ctx context.Context, groupId int, userId []int) ([]model.UserGroupMap, error) {
+	// Simulate a database call to get user
+	var user []model.UserGroupMap
+	result := db.db.Where("group_id = ? and member_id in ?", groupId, userId).Find(&user)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return user, nil
+}
