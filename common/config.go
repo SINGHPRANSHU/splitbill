@@ -9,6 +9,9 @@ import (
 type Config struct {
 	Port        string `mapstructure:"port"`
 	DatabaseURL string `mapstructure:"database_url"`
+	Broker      string `json:"broker"`
+	Topic       string `json:"topic"`
+	GroupID     string `json:"groupId"`
 }
 
 func LoadConfig() *Config {
@@ -21,7 +24,7 @@ func LoadConfig() *Config {
 		log.Fatalf("Fatal error Config file: %s \n", err)
 	}
 	err = viper.Unmarshal(&config)
-	if err != nil {               // Handle errors reading the config file
+	if err != nil { // Handle errors reading the config file
 		log.Fatalf("Fatal error config file: %s \n", err)
 	}
 	return config

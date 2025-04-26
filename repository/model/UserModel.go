@@ -8,4 +8,4 @@ type User struct {
 	Phone     string  `json:"phone" validate:"required"`
 	CreatedAt *string `json:"created_at"`
 	UpdatedAt *string `json:"updated_at"`
-}
+}	
