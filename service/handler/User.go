@@ -12,6 +12,7 @@ import (
 	"github.com/singhpranshu/splitbill/common/dto"
 	db "github.com/singhpranshu/splitbill/repository"
 	"github.com/singhpranshu/splitbill/repository/model"
+	jwt "github.com/singhpranshu/splitbill/service/middleware"
 )
 
 var validate = validator.New()
@@ -54,7 +55,16 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(common.GetHttpErrorResponse(http.StatusBadRequest, err.Error())))
 		return
 	}
-	user, err := h.DB.CreateUser(r.Context(), user)
+	hashedPassword, err := jwt.HashPassword(user.Password)
+	if err != nil {
+		log.Println("Error hashing password:", err)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(common.GetHttpErrorResponse(http.StatusInternalServerError, "something went wrong")))
+		return
+	}
+	user.Password = hashedPassword
+	user, err = h.DB.CreateUser(r.Context(), user)
 	if err != nil {
 		log.Println("Error creating user:", err)
 		w.Header().Set("Content-Type", "application/json")
@@ -70,4 +80,53 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(dto.GetUserDtoFromModel(user))
+}
+
+func (h *Handler) LoginUser(w http.ResponseWriter, r *http.Request) {
+	// Handler logic to login user
+	var user *dto.UserLoginDto
+	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(common.GetHttpErrorResponse(http.StatusBadRequest, "invalid request body")))
+		return
+	}
+	log.Println(user)
+	if err := validate.Struct(user); err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(common.GetHttpErrorResponse(http.StatusBadRequest, err.Error())))
+		return
+	}
+	userModel, err := h.DB.GetUser(r.Context(), user.Username)
+	if err != nil {
+		log.Println("Invalid User", err)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte(common.GetHttpErrorResponse(http.StatusUnauthorized, "something went wrong")))
+		return
+	}
+
+	if !jwt.VerifyPassword(user.Password, userModel.Password) {
+		log.Println("Invalid Password")
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte(common.GetHttpErrorResponse(http.StatusUnauthorized, "invalid password")))
+		return
+	}
+	tokenString, err := jwt.CreateToken(*userModel)
+	if err != nil {
+		log.Println("Error generating token:", err)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(common.GetHttpErrorResponse(http.StatusInternalServerError, "something went wrong")))
+		return
+	}
+	response := dto.UserLoginResponseDto{
+		AccessToken: tokenString,
+		Username:    userModel.Username,
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
 }
