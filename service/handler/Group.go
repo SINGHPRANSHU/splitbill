@@ -12,6 +12,7 @@ import (
 	"github.com/singhpranshu/splitbill/common/dto"
 	db "github.com/singhpranshu/splitbill/repository"
 	"github.com/singhpranshu/splitbill/repository/model"
+	jwt "github.com/singhpranshu/splitbill/service/middleware"
 )
 
 func (h *Handler) GetGroup(w http.ResponseWriter, r *http.Request) {
@@ -39,7 +40,7 @@ func (h *Handler) GetGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	member, err := h.DB.GetmembersFromGroupId(r.Context(), group.ID)
-	if err != nil {	
+	if err != nil {
 		log.Println("Error getting user:", err)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadGateway)
@@ -74,7 +75,15 @@ func (h *Handler) CreateGroup(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(common.GetHttpErrorResponse(http.StatusUnauthorized, err.Error())))
 		return
 	}
-	group.CreatedBy = user.ID
+	userClaim, ok := r.Context().Value(jwt.UserClaimKeyName).(jwt.UserClaims)
+	if !ok {
+		log.Println("Error getting user claim from context")
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte(common.GetHttpErrorResponse(http.StatusUnauthorized, "invalid token")))
+		return
+	}
+	group.CreatedBy = userClaim.ID
 	group, err = h.DB.CreateGroup(r.Context(), group)
 	if err != nil {
 		log.Println("Error creating group:", err)
@@ -89,7 +98,7 @@ func (h *Handler) CreateGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	_, err = h.DB.AddMember(r.Context(), &model.UserGroupMap{
-		GroupId: group.ID,
+		GroupId:  group.ID,
 		MemberId: user.ID,
 	})
 	if err != nil {
@@ -134,6 +143,26 @@ func (h *Handler) Addmember(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(common.GetHttpErrorResponse(http.StatusUnauthorized, err.Error())))
 		return
 	}
+
+	userClaim, ok := r.Context().Value(jwt.UserClaimKeyName).(jwt.UserClaims)
+	if !ok {
+		log.Println("Error getting user claim from context")
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte(common.GetHttpErrorResponse(http.StatusUnauthorized, "invalid token")))
+		return
+	}
+
+	users, err := h.DB.GetUsersByGroupIdAndUserId(r.Context(), userGroupMap.GroupId, []int{userClaim.ID})
+
+	if len(users) == 0 {
+		log.Println("Error getting user:", err)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte(common.GetHttpErrorResponse(http.StatusUnauthorized, "you are not part of group")))
+		return
+	}
+
 	userGroupMap, err = h.DB.AddMember(r.Context(), userGroupMap)
 	if err != nil {
 		log.Println("Error adding member:", err)

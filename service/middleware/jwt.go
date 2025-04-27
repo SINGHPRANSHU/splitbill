@@ -12,6 +12,7 @@ import (
 )
 
 type UserClaims struct {
+	ID   int    `json:"id"`
 	Name string `json:"name"`
 	jwt.RegisteredClaims
 }
@@ -60,8 +61,6 @@ func VerifyToken(tokenString string) (*UserClaims, error) {
 
 	if claims, ok := token.Claims.(*UserClaims); ok && token.Valid {
 		// Token is valid, return the claims
-		fmt.Println("userClaim", claims, ok)
-
 		return claims, nil
 	}
 

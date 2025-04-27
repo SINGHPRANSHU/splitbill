@@ -9,6 +9,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/singhpranshu/splitbill/common"
 	"github.com/singhpranshu/splitbill/common/dto"
+	jwt "github.com/singhpranshu/splitbill/service/middleware"
 )
 
 func (h *Handler) GetSplitData(w http.ResponseWriter, r *http.Request) {
@@ -55,7 +56,15 @@ func (h *Handler) AddExpense(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(common.GetHttpErrorResponse(http.StatusBadRequest, err.Error())))
 		return
 	}
-	_, err := h.DB.GetUserById(r.Context(), splitData.ExpenseAddedBy)
+	userClaim, ok := r.Context().Value(jwt.UserClaimKeyName).(jwt.UserClaims)
+	if !ok {
+		log.Println("Error getting user claim from context")
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte(common.GetHttpErrorResponse(http.StatusUnauthorized, "invalid token")))
+		return
+	}
+	_, err := h.DB.GetUserById(r.Context(), userClaim.ID)
 	if err != nil {
 		log.Println("Error getting user:", err)
 		w.Header().Set("Content-Type", "application/json")
@@ -75,7 +84,7 @@ func (h *Handler) AddExpense(w http.ResponseWriter, r *http.Request) {
 
 	log.Println("members:", len(member), "split with:", len(splitData.SplitWith))
 
-	splitModel := dto.GetSplitModelFromDto(splitData)
+	splitModel := dto.GetSplitModelFromDto(splitData, userClaim.ID)
 
 	if len(member) != len(splitData.SplitWith) || len(splitModel) != len(splitData.SplitWith) {
 		log.Println("split with has wrong data:", err)
