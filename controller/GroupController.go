@@ -24,5 +24,6 @@ func (groupController *GroupController) RegisterRoutes() {
 		r.Get("/{id}/", groupController.handler.GetGroup)
 		r.Post("/", groupController.handler.CreateGroup)
 		r.Post("/member", groupController.handler.Addmember)
+		r.Get("/", groupController.handler.GetAllGroupForUser)
 	})
 }

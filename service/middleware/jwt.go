@@ -3,6 +3,7 @@ package jwt
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -12,8 +13,8 @@ import (
 )
 
 type UserClaims struct {
-	ID   int    `json:"id"`
-	Name string `json:"name"`
+	UserID int    `json:"user_id"`
+	Name   string `json:"name"`
 	jwt.RegisteredClaims
 }
 
@@ -31,7 +32,8 @@ func InitJwt(c *common.Config) {
 func CreateToken(user model.User) (string, error) {
 	// Create a new JWT token with the payload
 	userClaim := UserClaims{
-		Name: user.Username,
+		UserID: user.ID,
+		Name:   user.Username,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    "splitbill",
 			Subject:   user.Username,
@@ -69,14 +71,15 @@ func VerifyToken(tokenString string) (*UserClaims, error) {
 
 func AuthenticateMiddleware(originalHandler http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		authToken := r.Header.Get("Authorization")
-		if authToken == "" {
+		authTokenCookie, err := r.Cookie("token")
+		if err != nil || authTokenCookie.Value == "" {
+			log.Println("Authorization header is required", err, authTokenCookie)
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusUnauthorized)
 			w.Write([]byte(common.GetHttpErrorResponse(http.StatusUnauthorized, "Authorization header is required")))
 			return
 		}
-		userClaim, err := VerifyToken(authToken)
+		userClaim, err := VerifyToken(authTokenCookie.Value)
 		if err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusUnauthorized)

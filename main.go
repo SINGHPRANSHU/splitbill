@@ -21,6 +21,7 @@ func main() {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
+	r.Use(jwt.CorsMiddlewareHandler)
 
 	controller.NewUserController(r, handler).RegisterRoutes()
 	controller.NewGroupController(r, handler).RegisterRoutes()

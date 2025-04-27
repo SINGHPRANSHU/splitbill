@@ -54,6 +54,14 @@ func (h *Handler) GetGroup(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) CreateGroup(w http.ResponseWriter, r *http.Request) {
 	// Handler logic to create user
+	userClaim, ok := r.Context().Value(jwt.UserClaimKeyName).(*(jwt.UserClaims))
+	if !ok {
+		log.Println("Error getting user claim from context")
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte(common.GetHttpErrorResponse(http.StatusUnauthorized, "invalid token")))
+		return
+	}
 	var group *model.Group
 	if err := json.NewDecoder(r.Body).Decode(&group); err != nil {
 		w.Header().Set("Content-Type", "application/json")
@@ -67,7 +75,7 @@ func (h *Handler) CreateGroup(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(common.GetHttpErrorResponse(http.StatusBadRequest, err.Error())))
 		return
 	}
-	user, err := h.DB.GetUserById(r.Context(), group.CreatedBy)
+	user, err := h.DB.GetUserById(r.Context(), userClaim.UserID)
 	if err != nil {
 		log.Println("Error getting user:", err)
 		w.Header().Set("Content-Type", "application/json")
@@ -75,15 +83,7 @@ func (h *Handler) CreateGroup(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(common.GetHttpErrorResponse(http.StatusUnauthorized, err.Error())))
 		return
 	}
-	userClaim, ok := r.Context().Value(jwt.UserClaimKeyName).(jwt.UserClaims)
-	if !ok {
-		log.Println("Error getting user claim from context")
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write([]byte(common.GetHttpErrorResponse(http.StatusUnauthorized, "invalid token")))
-		return
-	}
-	group.CreatedBy = userClaim.ID
+	group.CreatedBy = userClaim.UserID
 	group, err = h.DB.CreateGroup(r.Context(), group)
 	if err != nil {
 		log.Println("Error creating group:", err)
@@ -153,7 +153,7 @@ func (h *Handler) Addmember(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	users, err := h.DB.GetUsersByGroupIdAndUserId(r.Context(), userGroupMap.GroupId, []int{userClaim.ID})
+	users, err := h.DB.GetUsersByGroupIdAndUserId(r.Context(), userGroupMap.GroupId, []int{userClaim.UserID})
 
 	if len(users) == 0 {
 		log.Println("Error getting user:", err)
@@ -175,4 +175,27 @@ func (h *Handler) Addmember(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(userGroupMap)
 
+}
+
+func (h *Handler) GetAllGroupForUser(w http.ResponseWriter, r *http.Request) {
+	// Handler logic to get user
+	userClaim, ok := r.Context().Value(jwt.UserClaimKeyName).(*(jwt.UserClaims))
+	if !ok {
+		log.Println("Error getting user claim from context")
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte(common.GetHttpErrorResponse(http.StatusUnauthorized, "invalid token")))
+		return
+	}
+	group, err := h.DB.GetGroupByUserId(r.Context(), []int{userClaim.UserID})
+	if err != nil {
+		log.Println("Error getting user:", err)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(common.GetHttpErrorResponse(http.StatusNotFound, "something went wrong")))
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(group)
 }

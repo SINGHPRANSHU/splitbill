@@ -64,7 +64,7 @@ func (h *Handler) AddExpense(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(common.GetHttpErrorResponse(http.StatusUnauthorized, "invalid token")))
 		return
 	}
-	_, err := h.DB.GetUserById(r.Context(), userClaim.ID)
+	_, err := h.DB.GetUserById(r.Context(), userClaim.UserID)
 	if err != nil {
 		log.Println("Error getting user:", err)
 		w.Header().Set("Content-Type", "application/json")
@@ -84,7 +84,7 @@ func (h *Handler) AddExpense(w http.ResponseWriter, r *http.Request) {
 
 	log.Println("members:", len(member), "split with:", len(splitData.SplitWith))
 
-	splitModel := dto.GetSplitModelFromDto(splitData, userClaim.ID)
+	splitModel := dto.GetSplitModelFromDto(splitData, userClaim.UserID)
 
 	if len(member) != len(splitData.SplitWith) || len(splitModel) != len(splitData.SplitWith) {
 		log.Println("split with has wrong data:", err)
