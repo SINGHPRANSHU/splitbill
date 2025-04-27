@@ -14,6 +14,11 @@ import (
 	"github.com/singhpranshu/splitbill/repository/model"
 )
 
+// @Summary get group data by group id
+// @Description Retrieve group details
+// @Produce json
+// @Success 200
+// @Router /group/{id} [get]
 func (h *Handler) GetGroup(w http.ResponseWriter, r *http.Request) {
 	// Handler logic to get user
 	username := chi.URLParam(r, "id")
@@ -39,7 +44,7 @@ func (h *Handler) GetGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	member, err := h.DB.GetmembersFromGroupId(r.Context(), group.ID)
-	if err != nil {	
+	if err != nil {
 		log.Println("Error getting user:", err)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadGateway)
@@ -51,6 +56,11 @@ func (h *Handler) GetGroup(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(dto.GetGroupDtoFromModel(group, *member))
 }
 
+// @Summary create group data
+// @Description create group details
+// @Produce json
+// @Success 200
+// @Router /group [post]
 func (h *Handler) CreateGroup(w http.ResponseWriter, r *http.Request) {
 	// Handler logic to create user
 	var group *model.Group
@@ -89,7 +99,7 @@ func (h *Handler) CreateGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	_, err = h.DB.AddMember(r.Context(), &model.UserGroupMap{
-		GroupId: group.ID,
+		GroupId:  group.ID,
 		MemberId: user.ID,
 	})
 	if err != nil {
@@ -104,6 +114,11 @@ func (h *Handler) CreateGroup(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(dto.GetGroupDtoFromModel(group, []model.User{}))
 }
 
+// @Summary create group member data
+// @Description create group member details
+// @Produce json
+// @Success 200
+// @Router /group/member [post]
 func (h *Handler) Addmember(w http.ResponseWriter, r *http.Request) {
 	var userGroupMap *model.UserGroupMap
 	if err := json.NewDecoder(r.Body).Decode(&userGroupMap); err != nil {

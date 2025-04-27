@@ -16,6 +16,12 @@ import (
 
 var validate = validator.New()
 
+// @Summary Get a user by name
+// @Description Retrieve user details
+// @Param user_name path string true "User Name"
+// @Produce json
+// @Success 200
+// @Router /users/{user_name} [get]
 func (h *Handler) GetUser(w http.ResponseWriter, r *http.Request) {
 	// Handler logic to get user
 	username := chi.URLParam(r, "user_name")
@@ -38,6 +44,11 @@ func (h *Handler) GetUser(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(dto.GetUserDtoFromModel(user))
 }
 
+// @Summary create a user by name
+// @Description Retrieve user details
+// @Produce json
+// @Success 200
+// @Router /users [post]
 func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	// Handler logic to create user
 	var user *model.User

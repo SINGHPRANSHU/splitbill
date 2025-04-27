@@ -11,6 +11,11 @@ import (
 	"github.com/singhpranshu/splitbill/common/dto"
 )
 
+// @Summary get split data by group id
+// @Description Retrieve split details
+// @Produce json
+// @Success 200
+// @Router /split/{id} [get]
 func (h *Handler) GetSplitData(w http.ResponseWriter, r *http.Request) {
 	// Handler logic to get user
 	groupId := chi.URLParam(r, "id")
@@ -35,11 +40,18 @@ func (h *Handler) GetSplitData(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(common.GetHttpErrorResponse(http.StatusNotFound, "something went wrong")))
 		return
 	}
+	//calculate the split
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(splitData)
 }
 
+// @Summary create split data by group id
+// @Description Retrieve split details
+// @Produce json
+// @Success 200
+// @Router /split [post]
 func (h *Handler) AddExpense(w http.ResponseWriter, r *http.Request) {
 	// Handler logic to create user
 	var splitData *dto.SplitDto
