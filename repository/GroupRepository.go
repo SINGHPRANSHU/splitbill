@@ -44,3 +44,12 @@ func (db *DB) GetUsersByGroupIdAndUserId(ctx context.Context, groupId int, userI
 	}
 	return user, nil
 }
+func (db *DB) GetGroupByUserId(ctx context.Context, userId []int) ([]model.Group, error) {
+	// Simulate a database call to get user
+	var user []model.Group
+	result := db.db.Where("created_by in ?", userId).Find(&user)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return user, nil
+}

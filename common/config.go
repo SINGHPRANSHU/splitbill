@@ -7,8 +7,10 @@ import (
 )
 
 type Config struct {
-	Port        string `mapstructure:"port"`
-	DatabaseURL string `mapstructure:"database_url"`
+	Port              string `mapstructure:"port"`
+	DatabaseURL       string `mapstructure:"database_url"`
+	JWTSecretKey      string `mapstructure:"jwt_secret_key"`
+	PasswordSecretKey string `mapstructure:"password_secret_key"`
 }
 
 func LoadConfig() *Config {
@@ -21,7 +23,7 @@ func LoadConfig() *Config {
 		log.Fatalf("Fatal error Config file: %s \n", err)
 	}
 	err = viper.Unmarshal(&config)
-	if err != nil {               // Handle errors reading the config file
+	if err != nil { // Handle errors reading the config file
 		log.Fatalf("Fatal error config file: %s \n", err)
 	}
 	return config
