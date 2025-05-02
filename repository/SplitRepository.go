@@ -32,3 +32,14 @@ func (db *DB) AddSplit(ctx context.Context, split []model.Split) ([]model.Split,
 	}
 	return split, nil
 }
+
+func (db *DB) GetSplitByUser(ctx context.Context, loggedInUserId string) ([]model.Split, error) {
+	// Simulate a database call to get user
+	var split []model.Split
+	result := db.db.Where("from_user = ?", loggedInUserId).Find(&split).Group("from_user")
+	if result.Error != nil {
+		log.Println("Error creating split:", result.Error)
+		return nil, errors.New("something went wrong")
+	}
+	return split, nil
+}

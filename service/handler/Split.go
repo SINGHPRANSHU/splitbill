@@ -42,6 +42,7 @@ func (h *Handler) GetSplitData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	//calculate the split
+	// userSplitData := h.DB.GetSplitByUser(r.Context(), splitData[0].FromUser)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
