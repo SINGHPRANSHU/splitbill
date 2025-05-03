@@ -3,7 +3,6 @@ package handler
 import (
 	"encoding/json"
 	"errors"
-	"log"
 	"net/http"
 	"time"
 
@@ -18,6 +17,12 @@ import (
 
 var validate = validator.New()
 
+// @Summary Get a user by name
+// @Description Retrieve user details
+// @Param user_name path string true "User Name"
+// @Produce json
+// @Success 200
+// @Router /users/{user_name} [get]
 func (h *Handler) GetUser(w http.ResponseWriter, r *http.Request) {
 	// Handler logic to get user
 	username := chi.URLParam(r, "user_name")
@@ -29,7 +34,7 @@ func (h *Handler) GetUser(w http.ResponseWriter, r *http.Request) {
 	}
 	user, err := h.DB.GetUser(r.Context(), username)
 	if err != nil {
-		log.Println("Error getting user:", err)
+		h.Logger.Println("Error getting user:", err)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(common.GetHttpErrorResponse(http.StatusNotFound, "something went wrong")))
@@ -40,6 +45,11 @@ func (h *Handler) GetUser(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(dto.GetUserDtoFromModel(user))
 }
 
+// @Summary create a user by name
+// @Description Retrieve user details
+// @Produce json
+// @Success 200
+// @Router /users [post]
 func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	// Handler logic to create user
 	var user *model.User
@@ -49,7 +59,7 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(common.GetHttpErrorResponse(http.StatusBadRequest, "invalid request body")))
 		return
 	}
-	log.Println(user)
+	h.Logger.Println(user)
 	if err := validate.Struct(user); err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
@@ -58,7 +68,7 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 	hashedPassword, err := jwt.HashPassword(user.Password)
 	if err != nil {
-		log.Println("Error hashing password:", err)
+		h.Logger.Println("Error hashing password:", err)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(common.GetHttpErrorResponse(http.StatusInternalServerError, "something went wrong")))
@@ -67,7 +77,7 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	user.Password = hashedPassword
 	user, err = h.DB.CreateUser(r.Context(), user)
 	if err != nil {
-		log.Println("Error creating user:", err)
+		h.Logger.Println("Error creating user:", err)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
 		var duplicateEntryError *db.SqlDuplicateEntryError
@@ -92,7 +102,7 @@ func (h *Handler) LoginUser(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(common.GetHttpErrorResponse(http.StatusBadRequest, "invalid request body")))
 		return
 	}
-	log.Println(user)
+	h.Logger.Println(user)
 	if err := validate.Struct(user); err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
@@ -101,7 +111,7 @@ func (h *Handler) LoginUser(w http.ResponseWriter, r *http.Request) {
 	}
 	userModel, err := h.DB.GetUser(r.Context(), user.Username)
 	if err != nil {
-		log.Println("Invalid User", err)
+		h.Logger.Println("Invalid User", err)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write([]byte(common.GetHttpErrorResponse(http.StatusUnauthorized, "something went wrong")))
@@ -109,7 +119,7 @@ func (h *Handler) LoginUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !jwt.VerifyPassword(user.Password, userModel.Password) {
-		log.Println("Invalid Password")
+		h.Logger.Println("Invalid Password")
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write([]byte(common.GetHttpErrorResponse(http.StatusUnauthorized, "invalid password")))
@@ -117,7 +127,7 @@ func (h *Handler) LoginUser(w http.ResponseWriter, r *http.Request) {
 	}
 	tokenString, err := jwt.CreateToken(*userModel)
 	if err != nil {
-		log.Println("Error generating token:", err)
+		h.Logger.Println("Error generating token:", err)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(common.GetHttpErrorResponse(http.StatusInternalServerError, "something went wrong")))

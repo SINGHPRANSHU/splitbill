@@ -22,6 +22,7 @@ func (splitController *SplitController) RegisterRoutes() {
 	splitController.r.Route("/split", func(r chi.Router) {
 		r.Use(jwt.AuthenticateMiddlewareHandler)
 		r.Get("/{id}/", splitController.handler.GetSplitData)
+		r.Get("/{groupId}", splitController.handler.GetSplitDataByGroupId)
 		r.Post("/", splitController.handler.AddExpense)
 	})
 }

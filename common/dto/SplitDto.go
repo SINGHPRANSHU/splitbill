@@ -10,6 +10,18 @@ type SplitDto struct {
 	Type           string `json:"type" validate:"required,oneof=share paid"`
 }
 
+type SplitResponse struct {
+	FromUser int `json:"fromUser"`
+	ToUser   int `json:"toUser"`
+	Amount   int `json:"amount"`
+	Balance  int `json:"balance"`
+}
+type NetSplit struct {
+	FromUser int `json:"fromUser"`
+	ToUser   int `json:"toUser"`
+	Amount   int `json:"netAmount"`
+}
+
 func GetSplitModelFromDto(splitDto *SplitDto, createdBy int) []model.Split {
 	var splits []model.Split
 	for _, userId := range splitDto.SplitWith {
@@ -17,7 +29,7 @@ func GetSplitModelFromDto(splitDto *SplitDto, createdBy int) []model.Split {
 			continue
 		}
 		split := model.Split{
-			FromUser:  createdBy,
+			FromUser:  splitDto.ExpenseAddedBy,
 			ToUser:    userId,
 			Type:      splitDto.Type,
 			Amount:    splitDto.Amount,
