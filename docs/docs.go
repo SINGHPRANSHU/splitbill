@@ -12,7 +12,7 @@ const docTemplate = `{
         "termsOfService": "http://swagger.io/terms/",
         "contact": {
             "name": "Kajal Rana",
-            "email": "kajalrana@example.com"
+            "email": "kasssjalrana@example.com"
         },
         "license": {
             "name": "Apache 2.0",
@@ -72,6 +72,20 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "summary": "create split data by group id",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/split/{groupId}": {
+            "get": {
+                "description": "Retrieve split details",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "get final split data by group id",
                 "responses": {
                     "200": {
                         "description": "OK"

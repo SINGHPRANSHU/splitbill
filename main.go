@@ -10,8 +10,8 @@ import (
 	_ "github.com/singhpranshu/splitbill/docs"
 	db "github.com/singhpranshu/splitbill/repository"
 	"github.com/singhpranshu/splitbill/service/handler"
-	httpSwagger "github.com/swaggo/http-swagger/v2"
 	jwt "github.com/singhpranshu/splitbill/service/middleware"
+	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 
 // @title SplitBill API
@@ -27,16 +27,17 @@ import (
 func main() {
 	config := common.LoadConfig()
 	db := db.NewDB(config.DatabaseURL)
-	handler := handler.NewHandler(db)
+	logger := handler.NewStandardLogger()
+	handler := handler.NewHandler(db, logger)
 	jwt.InitJwt(config)
 
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
+	r.Use(jwt.CorsMiddlewareHandler)
 	r.Get("/swagger/*", httpSwagger.Handler(
 		httpSwagger.URL("/swagger/doc.json"), // The url pointing to API definition
 	))
-	r.Use(middleware.Recoverer)
-	r.Use(jwt.CorsMiddlewareHandler)
 
 	controller.NewUserController(r, handler).RegisterRoutes()
 	controller.NewGroupController(r, handler).RegisterRoutes()
